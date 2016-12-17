@@ -1,0 +1,58 @@
+{
+  "name": "lebeaucheveu-backend",
+  "version": "0.0.0",
+  "private": true,
+  "scripts": {
+    "start": "nodemon index.js",
+    "test": "make test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git@github.com:willycedric/lebeaucheveu-backend.git"
+  },
+  "author": "Willy DONGMO <w.dongmo@gmail.com>",
+  "license": "MIT",
+  "dependencies": {
+    "async": "^2.0.1",
+    "bcrypt": "^0.8.3",
+    "bluebird": "^3.4.6",
+    "body-parser": "^1.13.2",
+    "chai": "~1.8.1",
+    "colors": "^1.1.2",
+    "connect-flash": "^0.1.1",
+    "cookie-parser": "^1.4.1",
+    "cors": "^2.7.1",
+    "debug": "^2.1.1",
+    "express": "^4.13.1",
+    "express-flash": "0.0.2",
+    "express-jwt": "^3.0.1",
+    "express-session": "^1.13.0",
+    "favicon": "0.0.2",
+    "jade": "^1.9.1",
+    "jsonwebtoken": "^5.5.4",
+    "lodash": "^3.10.0",
+    "method-override": "^2.3.5",
+    "mocha": "~1.14.0",
+    "moment": "^2.15.1",
+    "mongoose": "^4.0.8",
+    "morgan": "^1.6.1",
+    "nodemailer": "^2.5.0",
+    "passport": "^0.3.2",
+    "passport-facebook": "*",
+    "passport-google-oauth": "^1.0.0",
+    "passport-jwt": "^2.0.0",
+    "passport-local": "^1.0.0",
+    "passport-local-mongoose": "^1.0.0",
+    "sendgrid": "^4.0.1",
+    "serve-favicon": "^2.2.0",
+    "should": "~2.1.0",
+    "static-favicon": "^2.0.0-alpha"
+  },
+  "devDependencies": {
+    "gulp": "^3.9.0",
+    "gulp-rename": "^1.2.2",
+    "gulp-template": "^3.0.0",
+    "gulp-todoist": "0.0.2",
+    "yargs": "^3.15.0"
+  }
+}
