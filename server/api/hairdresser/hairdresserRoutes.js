@@ -28,6 +28,7 @@ failureRedirect:'/api/hairdressers/failure'}));
 	router.get('/logout',passport.authenticate('hairdresser-jwt'),controller.logout);
 	router.get('/test', controller.getAWeek);
 	router.post('/isAvailable',controller.isAvailable);
+	router.post('/activate',controller.activateUserAccount);
 	router.post('/isUsernameAvailable',controller.isUsernameAvailable);
     router.put('/hairdresserAppointment',passport.authenticate('user-jwt'),controller.updateAppointmentSchema);
     router.put('/lockedHairdressertimeslot',passport.authenticate('hairdresser-jwt'),controller.lockedHairdressertimeslot);

@@ -54,7 +54,7 @@ var HairdresserAppointmentSchema = new Schema({
     type:Number,
     default:0,//0 -> empty,-1 -> pending, 1 -> done,-2 --> cancel by the hairdresser, -3 --> cancel by the customer
     min:-3,
-    max:0
+    max:1
   },
   dayOfWeek:{
     type:Date
@@ -122,7 +122,7 @@ var HairdresserSchema = new Schema({
   accountstatus:{
     type:Number,
     max:1,
-    default:1//1-> Active, 0-> deactivated
+    default:0//1-> Active, 0-> deactivated
   },
   lastconnection:{
     type:Date,
@@ -157,9 +157,6 @@ var HairdresserSchema = new Schema({
     default: 1 //0 -> Admin, 1 -> Hairdresser, 2->customer
   },
   activityArea:{ //Array of area covered by the hairdresser
-    type:Array
-  },
-  lockedDays:{ //list of the hairdresser locked days 
     type:Array
   },
   areaPostCode:{

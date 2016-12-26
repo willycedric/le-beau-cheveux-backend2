@@ -34,6 +34,7 @@ failureRedirect:'/api/users/failure'}));
 	router.post('/reset',controller.reset);
 	router.post('/updatePassword',controller.updatePassword);
 	router.post('/getUserById', passport.authenticate('hairdresser-jwt'), controller.getUserById);
+	router.post('/activate',controller.activateUserAccount);
 	router.post('/',Auth.userExist,controller.post);
 	router.get('/logout',passport.authenticate('user-jwt'),controller.logout);
 	router.post('/isAvailable',controller.isAvailable);

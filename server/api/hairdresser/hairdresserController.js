@@ -8,6 +8,8 @@ var signToken = require('../../auth/auth').signToken
 , logger = require('./../../util/logger'),
 moment = require('moment');
 var ObjectID = require('mongodb').ObjectID;
+var passwordHelper = require('../helper/passwordHelper'),
+accountHelper = require('../helper/accountActivationHelper'); 
 
 
 /**
@@ -160,8 +162,8 @@ exports.updateAppointmentSchema = function(req,res,next){
  */
 exports.lockedHairdressertimeslot = function(req,res,next){
   var hairdresser = req.user;
-  
-  hairdresser.lockedDays.push(req.body.date);
+  var newDate = new Date();
+  hairdresser.appointments.push({dayOfWeek:req.body.date,slotState:1,slotType:-1, createdAt:newDate});
   hairdresser.save(function(err,saved){
           if(err){
             return next(err);
@@ -182,12 +184,17 @@ exports.post = function(req, res, next) {
      var newHairdresser = new Hairdresser(req.body);
      Hairdresser.signup( newHairdresser, function(err, hairdresser){
     if(err) {return next(err);}
+    accountHelper.send(hairdresser,req,next);
     req.login(hairdresser, function(err){
       if(err) return next(err);
       res.status("200").send(JSON.stringify({isRegistered:true}));
     });
   });
 };
+
+exports.activateUserAccount = function(req,res,next){
+  accountHelper.activate(Hairdresser,req,res,next);
+}
 
 /**
  * [function used to login a hairdresser through with locals credentials]
@@ -277,140 +284,7 @@ exports.logout = function(req, res){
       logger.log("No session defined");
    }   
 };
-/**
- * 
- */
 
-/**
- * [forgot description]
- * @param  {[type]}   req  [description]
- * @param  {[type]}   res  [description]
- * @param  {Function} next [description]
- * @return {[type]}        [description]
- */
-exports.forgot = function(req,res,next){  
-  async.waterfall([
-      function(done){
-        crypto.randomBytes(20, function(err,buf){
-          var token = buf.toString('hex');
-
-          done(err,token);
-        });
-      },
-      function(token,done){
-        Hairdresser.findOne({email:req.body.email}, function(err,hairdresser){
-          if(!hairdresser){
-            //req.flash('error','No account with that email address exits.');
-            console.log('No account with that email address exists');
-            return next(err);
-          }
-          //console.log('hairdresser found ',hairdresser);
-          hairdresser.resetPasswordToken =token;
-          hairdresser.resetPasswordExpires=Date.now()+3600000;//1 hour
-          hairdresser.save(function(err){
-            done(err,token,hairdresser);
-          });
-        });
-      },
-      function(token, hairdresser, done){
-        var from_email = new helper.Email('lebeaucheveu@market.com');
-        var to_email = new helper.Email(hairdresser.email);
-        var subject="mot de passe oublié";
-        var content =new helper.Content('text/plain','You are receiving this because you (or someone else) have requested the reset of the password for your account.\n\n' +
-          'Please click on the following link, or paste this into your browser to complete the process:\n\n' +
-           req.headers.origin + '/#/forgot/' + token + '\n\n' +
-          'If you did not request this, please ignore this email and your password will remain unchanged.\n');
-        var mail = new helper.Mail(from_email,subject,to_email,content);
-
-        var sg = require('sendgrid')("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");
-        var request = sg.emptyRequest({
-          method:'POST',
-          path:'/v3/mail/send',
-          body:mail.toJSON()
-        });
-        sg.API(request,function(err,response){
-          /*console.log("statusCode ",response.statusCode);
-          console.log("body ",response.body);
-          console.log("headers ",response.headers);*/
-          if(err) return next(err);
-        });
-      }
-    ], function(err){
-
-        if(err) return next(err);
-        
-    });    
-};
-
-/**
- * 
- * @param  {[type]}   req  [description]
- * @param  {[type]}   res  [description]
- * @param  {Function} next [description]
- * @return {[type]}        [description]
- */
-exports.reset = function(req, res,next){
-    Hairdresser.findOne({resetPasswordToken:req.body.token, resetPasswordExpires:{$gt:Date.now()}}, function(err,hairdresser){
-      if(err) return next(err);
-      else if(!hairdresser){
-          res.json({error:'Password reset token is invalid or has expired.'});
-      }else{
-        res.json({passworsToken:req.body.token});
-      }
-    });
-};
-
-/**
- * [updatePassword description]
- * @param  {[type]}   req  [description]
- * @param  {[type]}   res  [description]
- * @param  {Function} next [description]
- * @return {[type]}        [description]
- */
-exports.updatePassword = function(req, res,next){
-  async.waterfall([
-      function(done){
-        Hairdresser.findOne({resetPasswordToken:req.body.token,resetPasswordExpires:{$gt:Date.now()}},function(err,hairdresser){
-          if(err)return next(err);
-          else if(!hairdresser){
-            res.json({error:'Password reset token is invalid or has expired.'});
-          }
-          hairdresser.password= req.body.password;
-          hairdresser.resetPasswordToken=undefined;
-          hairdresser.resetPasswordExpires=undefined;
-          hairdresser.save(function(err){
-            req.login(hairdresser,function(err){
-              done(err,hairdresser);
-            });
-          });
-        });
-      },
-      function(hairdresser, done){
-        var from_email = new helper.Email('lebeaucheveu@market.com');
-        var to_email = new helper.Email(hairdresser.email);
-        var subject="nouveau mot de passe";
-        var content =new helper.Content('text/plain','You are receiving this because you (or someone else) have requested the reset of the password for your account.\n\n' +
-          'This is a confirmation that the password for your account ' + hairdresser.email + ' has just been changed.\n');
-        var mail = new helper.Mail(from_email,subject,to_email,content);
-
-        var sg = require('sendgrid')("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");
-        var request = sg.emptyRequest({
-          method:'POST',
-          path:'/v3/mail/send',
-          body:mail.toJSON()
-        });
-        sg.API(request,function(err,response){
-         /* console.log("statusCode ",response.statusCode);
-          console.log("body ",response.body);
-          console.log("headers ",response.headers);*/
-          if(err) return next(err);
-        });
-      }
-    ],function(err){
-        if(err) return next(err);
-      }
-    );
-};
 
 /**
  * [Function used to check if the hairdressername entered by the hairdresser willing to register is available]
@@ -695,7 +569,14 @@ exports.updateAppointmentStateWithReason = function(req, res, next){
           return next(err);
         }else if(hairdresser){
           hairdresser.notifications.push({message:req.body.reason});
-          callback(null,hairdresser);
+          hairdresser.save(function(err, savedHairdresser){
+              if(err){
+                return next(new Error( "save hairdresser message on appointment deletion " + err));
+              }else if(savedHairdresser){
+                 callback(null,savedHairdresser);
+              }
+          });
+         
         }
       })
     }, function(hairdresser,callback){
@@ -766,4 +647,38 @@ exports.updateAppointmentState = function(req,res,next){
                 res.status(202).json({success:true});
               }
           });
+}
+
+/**
+ * [forgot description]
+ * @param  {[type]}   req  [description]
+ * @param  {[type]}   res  [description]
+ * @param  {Function} next [description]
+ * @return {[type]}        [description]
+ */
+exports.forgot =function(req,res,next){
+  console.log(req.body.email);
+  passwordHelper.forgot(Hairdresser, req, res, next);
+}
+
+/**
+ * [reset description]
+ * @param  {[type]}   req  [description]
+ * @param  {[type]}   res  [description]
+ * @param  {Function} next [description]
+ * @return {[type]}        [description]
+ */
+exports.reset = function(req,res,next){
+  passwordHelper.reset(Hairdresser, req, res, next);
+}
+
+/**
+ * [updatePassword description]
+ * @param  {[type]}   req  [description]
+ * @param  {[type]}   res  [description]
+ * @param  {Function} next [description]
+ * @return {[type]}        [description]
+ */
+exports.updatePassword = function(req,res, next){
+  passwordHelper.updatePassword(Hairdresser,req,res,next);
 }

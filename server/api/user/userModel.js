@@ -104,7 +104,7 @@ var UserSchema = new Schema({
   accountstatus:{
     type:Number,
     max:1,
-    default:1//1-> Active, 0-> deactivated
+    default:0//1-> Active, 0-> deactivated
   },
     role: {
     type: Number, min:0, max:2,
@@ -264,9 +264,9 @@ UserSchema.statics.encryptPassword =function(plainTextPword) {
 UserSchema.methods = {
   toJson: function(user) {
     var obj = this.toObject()
-    //delete obj.password;
-    //delete obj.hash;
-    //delete obj.salt;
+    delete obj.password;
+    delete obj.hash;
+    delete obj.salt;
     delete obj.__v;
     return obj;
   },

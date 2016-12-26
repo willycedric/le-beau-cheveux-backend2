@@ -10,6 +10,8 @@ moment = require('moment');
 var ObjectID = require('mongodb').ObjectID;
 var hash = require('../../util/hash'),
 config = require('../../config/config');
+var passwordHelper = require('../helper/passwordHelper'),
+accountHelper = require('../helper/accountActivationHelper'); 
 
 /**
  * [params description]
@@ -20,7 +22,6 @@ config = require('../../config/config');
  * @return {[type]}        [description]
  */
 exports.params = function(req, res, next, id) {
-    logger.log('inside the user params');
   User.findById(id)
     .select('-password')
     .exec()
@@ -126,7 +127,6 @@ exports.updateCustomerPreference = function(req, res, next){
       }
     });
   }else{ //create a new location object
-    console.log('creation de la location ', JSON.stringify(req.body.location));
     var location = {
       type: req.body.location.type==1?'main':'secondary',
       address:req.body.location.address,
@@ -174,7 +174,6 @@ exports.updateUserProfile = function(req,res,next){
 exports.updateCustomerNotification = function(req, res, next){
   var user = req.user;
   var message = req.body.message;
-  console.log('message ',message);
   var query= {
     _id:new ObjectID(user._id),
     notifications:    {
@@ -326,18 +325,28 @@ exports.removeCustomerAppointmentWithReason = function(req,res, next){
  * @return {[type]}        [description]
  */
 exports.post = function(req, res, next) {
-    logger.log('You reach the right function');
      var newUser = new User(req.body);      
      User.signup( newUser, function(err, user){
     if(err) throw err;
     req.login(user, function(err){
       if(err) return next(err);
-      //res.status("200").send(JSON.stringify(_.omit(user,['password','hash','salt','__v','_id'])));
+      //send your registration email here
+      accountHelper.send(user,req, next);
       res.status("200").send(JSON.stringify({isRegistered:true}));
     });
   });
 };
 
+/**
+ * [ activateUserAccount allow to activa a user account]
+ * @param  {[type]}   req  [description]
+ * @param  {[type]}   res  [description]
+ * @param  {Function} next [description]
+ * @return {[type]}        [description]
+ */
+exports.activateUserAccount = function(req,res, next){
+  accountHelper.activate(User, req, res, next);
+}
 /**
  * [function used to login a user through with locals credentials]
  * @param  {[type]}   req  [description]
@@ -366,7 +375,6 @@ exports.facebookLogin = function(req,res,next){
   if(req.isAuthenticated()){
    var token = signToken(req.user._id,req.user.role,req.user.username);
    var user = new User(req.user);
-   //console.log("facebook Login " ,user);
    res.redirect('http://192.168.0.10:4500/#/home/'+token);
   }else{
       res.redirect('http://192.168.0.10:4500/#/login');
@@ -438,64 +446,9 @@ exports.logout = function(req, res){
  * @param  {Function} next [description]
  * @return {[type]}        [description]
  */
-exports.forgot = function(req,res,next){  
-  async.waterfall([
-      function(done){
-        crypto.randomBytes(20, function(err,buf){
-          var token = buf.toString('hex');
-          done(err,token);
-        });
-      },
-      function(token,done){
-               User.findOne({email:req.body.email}, function(err,user){
-          if(!user){
-            //req.flash('error','No account with that email address exits.');
-            console.log('No account with that email address exists');
-            return next(err);
-          }
-          //console.log('user found ',user);
-          user.resetPasswordToken =token;
-          user.resetPasswordExpires=Date.now()+3600000;//1 hour
-          user.save(function(err){
-            done(err,token,user);
-          });
-        });
-      },
-      function(token, user, done){
-        var from_email = new helper.Email('lebeaucheveu@market.com');
-        var to_email = new helper.Email(user.email);
-        var subject="mot de passe oublié";
-        var content =new helper.Content('text/plain','You are receiving this because you (or someone else) have requested the reset of the password for your account.\n\n' +
-          'Please click on the following link, or paste this into your browser to complete the process:\n\n' +
-           req.headers.origin + '/#/forgot/' + token + '\n\n' +
-          'If you did not request this, please ignore this email and your password will remain unchanged.\n');
-        var mail = new helper.Mail(from_email,subject,to_email,content);
-
-        var sg = require('sendgrid')(config.sendgrid.key);
-        var request = sg.emptyRequest({
-          method:'POST',
-          path:'/v3/mail/send',
-          body:mail.toJSON(),
-          'Content-Length':Buffer.byteLength(mail)
-        });
-
-        sg.API(request,function(err,response){
-          /*console.log("statusCode ",response.statusCode);
-          console.log("body ",response.body);
-          console.log("headers ",response.headers);*/
-          if(err) return next(err);
-          done(err,null);
-        });
-      }
-    ], function(err){
-        if(err) {
-            return next(err);     
-        }else{
-          res.status(202).json({success:true});
-        }   
-    });  
-};
-
+exports.forgot = function(req,res,next){
+  passwordHelper.forgot(User, req,res, next);
+}
 /**
  * 
  * @param  {[type]}   req  [description]
@@ -504,14 +457,7 @@ exports.forgot = function(req,res,next){
  * @return {[type]}        [description]
  */
 exports.reset = function(req, res,next){
-    User.findOne({resetPasswordToken:req.body.token, resetPasswordExpires:{$gt:Date.now()}}, function(err,user){
-      if(err) return next(err);
-      else if(!user){
-          res.json({error:'Password reset token is invalid or has expired.'});
-      }else{
-        res.json({passworsToken:req.body.token});
-      }
-    });
+    passwordHelper.reset(User,req,res,next);
 };
 
 /**
@@ -522,60 +468,7 @@ exports.reset = function(req, res,next){
  * @return {[type]}        [description]
  */
 exports.updatePassword = function(req, res,next){     
-  async.waterfall([
-      function(done){
-        User.findOne({resetPasswordToken:req.body.token,resetPasswordExpires:{$gt:Date.now()}},function(err,user){
-          if(err)return next(err);
-          else if(!user){
-            res.json({error:'Password reset token is invalid or has expired.'});
-          }
-          //user.password= req.body.password;
-          hash(req.body.password, function(err, salt, hash){
-              user.password= req.body.password,
-              user.salt = salt,
-              user.hash = hash,
-              user.resetPasswordToken=undefined;
-              user.resetPasswordExpires=undefined;
-              user.save(function(err,user){
-              /*req.login(user,function(err){
-                done(err,user);
-              });*/
-              done(err,user);
-            });
-          });        
-          
-        });
-      },
-      function(user, done){
-        var from_email = new helper.Email('lebeaucheveu@market.com');
-        var to_email = new helper.Email(user.email);
-        var subject="nouveau mot de passe";
-        var content =new helper.Content('text/plain','You are receiving this because you (or someone else) have requested the reset of the password for your account.\n\n' +
-          'This is a confirmation that the password for your account ' + user.email + ' has just been changed.\n');
-        var mail = new helper.Mail(from_email,subject,to_email,content);
-
-        var sg = require('sendgrid')(config.sendgrid.key);
-        var request = sg.emptyRequest({
-          method:'POST',
-          path:'/v3/mail/send',
-          body:mail.toJSON()
-        });
-        sg.API(request,function(err,response){
-         /* console.log("statusCode ",response.statusCode);
-          console.log("body ",response.body);
-          console.log("headers ",response.headers);*/
-          if(err) return next(err);
-          done(null,err);
-        });
-      }
-    ],function(err){
-        if(err){
-          return next(err);
-        }else{
-          res.status(202).json({success:true});
-        }
-      }
-    );
+  passwordHelper.updatePassword(User,req,res,next);
 };
 
 /**
@@ -696,7 +589,14 @@ exports.updateAppointmentStateWithReason = function(req, res, next){
           return next(err);
         }else if(customer){
           customer.notifications.push({message:req.body.reason});
-          callback(null,customer);
+          customer.save(function(err, savedCustomer){
+              if(err){
+                return next(new Error( "save customer message on appointment deletion " + err));
+              }else if(savedCustomer){
+                callback(null,savedCustomer);
+              }
+          })
+          
         }
       })
     }, function(customer,callback){
