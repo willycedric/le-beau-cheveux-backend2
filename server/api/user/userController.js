@@ -632,3 +632,23 @@ exports.updateAppointmentStateWithReason = function(req, res, next){
   ]);
 
 };
+
+/**
+ * [removeUserLocation function allowing to delete a user location]
+ * @param  {[type]}   req  [description]
+ * @param  {[type]}   res  [description]
+ * @param  {Function} next [description]
+ * @return {[type]}        [description]
+ */
+exports.removeUserLocation = function(req, res, next){
+  var customer = req.user;
+  console.log('id --> ', req.query.id);
+  customer.locations.remove(req.query.id);
+  customer.save(function(err, saved){
+    if(err){
+      return next(err);
+    }else if(saved){
+      res.status(202).json({success:true});
+    }
+  });
+};

@@ -28,6 +28,7 @@ failureRedirect:'/api/users/failure'}));
 	router.put('/updateappointmentstatewithreason',passport.authenticate('hairdresser-jwt'),controller.updateAppointmentStateWithReason);
 	router.delete('/removeCustomerAppointmentAndNotify',passport.authenticate('hairdresser-jwt'),controller.removeCustomerAppointmentAndNotify);
 	router.delete('/removeappointmentwithreason',passport.authenticate('hairdresser-jwt'),controller.removeCustomerAppointmentWithReason);
+	router.delete('/deleteuserlocation',passport.authenticate('user-jwt'),controller.removeUserLocation);
 	router.get('/login', controller.facebookLogin);
 	router.get('/',controller.get);
 	router.post('/forgot', controller.forgot);
