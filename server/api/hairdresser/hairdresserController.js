@@ -122,6 +122,7 @@ exports.put = function(req, res, next) {
  */
 exports.updateAppointmentSchema = function(req,res,next){
    //req.user contains customer information 
+
    Hairdresser.findById(req.body.hairdresserId, function(err,hairdresser){
       if(err){
         return next(err);
@@ -137,7 +138,8 @@ exports.updateAppointmentSchema = function(req,res,next){
             customerFirstname:req.user.firstname,
             customerUsername:req.user.username,
             createdAt:Date.now()
-          }
+          },
+          location:req.user.locations[req.body.locationIndex].address+" "+req.user.locations[req.body.locationIndex].zipcode+" "+req.user.locations[req.body.locationIndex].city
         }; 
         //populate the hairdresser appointment array
         hairdresser.appointments.push(newAppointment);
@@ -382,6 +384,7 @@ exports.getAppointmentById = function(req, res, next){
  */
 exports.hairdresserUpdateBooking = function(req,res, next){
     var hairdresser = req.user;
+    var appointmentLocation = hairdresser.appointments.id(req.body.id).location;
     var query = {
                 _id : new ObjectID(hairdresser._id), 
                 appointments : {
@@ -391,7 +394,7 @@ exports.hairdresserUpdateBooking = function(req,res, next){
                 }
             };
       hairdresser.nextbookings.push({_id:req.body.id,customerId:req.body.relatedCustomer._id,customerLastname:req.body.relatedCustomer.customerLastname, customerFirstname:req.body.relatedCustomer.customerFirstname, appointmentHour:req.body.time,
-      appointmentDate:req.body.date,appointmentLocation:req.body.relatedCustomer.customerLocation,appointmentState:-1});
+      appointmentDate:req.body.date,appointmentLocation:appointmentLocation,appointmentState:-1});
 
       hairdresser.save(function(err){
         if(err){

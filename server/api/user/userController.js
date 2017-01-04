@@ -216,7 +216,8 @@ exports.updateAppointmentSchema = function (req, res, next){
       selectedHour: req.body.selectedHour,
       hairdresserUsername: req.body.hairdresserUsername,
       dayOfWeek:req.body.dayOfWeek,
-      createdAt:Date.now()
+      createdAt:Date.now(),
+      location:customer.locations[req.body.locationIndex].address+" "+customer.locations[req.body.locationIndex].zipcode+" "+customer.locations[req.body.locationIndex].city
      });
       customer.save(function(err,saved){
       if(err){
@@ -400,6 +401,7 @@ exports.failure = function(req,res,next){
  * @return {[type]}        [description]
  */
 exports.delete = function(req, res, next) {
+  console.log('from the delete function');
   req.user.remove(function(err, removed) {
     if (err) {
       next(err);

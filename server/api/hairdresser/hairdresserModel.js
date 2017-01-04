@@ -65,6 +65,9 @@ createdAt:{ //appointment creatioon date
 },
 updateAt:{ //appointment update date
   type:Date
+},
+location:{
+  type:String
 }
 });
 
