@@ -1,5 +1,5 @@
 module.exports = {
-  // enabled logging for development
+  // enabled logging for development ->mongodb://localhost/lebeaucheveu-test
   logging: true,
   seed: false,
   db: {
