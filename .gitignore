@@ -3,5 +3,5 @@ npm-debug.log
 README.md
 data
 server/images
-server/config
+#server/config
 .idea
