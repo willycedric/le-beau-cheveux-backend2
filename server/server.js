@@ -16,7 +16,7 @@ var api = require('./api/api')(passport);
 // db.url is different depending on NODE_ENV
 //console.log(config.db.url);
 ////In production mode we must set tge autoIndex to false
-mongoose.connect(config.db.url,{ config: { autoIndex: true } });
+mongoose.connect('mongodb://<dbuser>:<dbpassword>@ds155718.mlab.com:55718/heroku_jv8hcbl4',{ config: { autoIndex: true } });
 if (config.seed) {
   require('./util/seed');
 }else{
