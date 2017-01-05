@@ -3,6 +3,6 @@ module.exports = {
   logging: true,
   seed: false,
   db: {
-    url: 'mongodb://localhost/lebeaucheveu-test'
+    url: 'mongodb://<dbuser>:<dbpassword>@ds155718.mlab.com:55718/heroku_jv8hcbl4'
   }
 };
