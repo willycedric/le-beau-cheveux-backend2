@@ -25,7 +25,7 @@ var config = {
       callbackURL: "{{PLACEHOLDER}}"
     },
     sendgrid:{
-      key:"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"
+      key:"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"
     }
 };
 
