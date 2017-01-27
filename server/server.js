@@ -26,7 +26,7 @@ if (config.seed) {
 //console.log(app.request);
 // setup the app middlware
 require('./middleware/appMiddleware')(app,passport);
-// setup the api
+// setup the ap
 app.use('/api',api);
     
 app.use('/auth', auth);
