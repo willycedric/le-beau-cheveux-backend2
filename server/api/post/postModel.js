@@ -22,21 +22,23 @@ var PostSchema = new Schema({
     unique: true
   },
 
-  text: {
+  body: {
     type: String,
     required: true
   },
   createdAt:{
-    type:Date
+    type:Date,
+    default:Date.now
   },
   lastUpadtedAt:{
-    type:Date
-  },
-  comments:[CommentSchema],
+    type:Date,
+    default:Date.now
+  }
+  //comments:[CommentSchema],
 
-  author: {type: Schema.Types.ObjectId, ref: 'user'},
+  //author: {type: Schema.Types.ObjectId, ref: 'user'},
 
-  categories: [{type: Schema.Types.ObjectId, ref: 'category'}]
+  //categories: [{type: Schema.Types.ObjectId, ref: 'category'}]
 });
 
 module.exports = mongoose.model('post', PostSchema);

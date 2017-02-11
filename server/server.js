@@ -23,6 +23,8 @@ if (config.seed) {
 }else{
 	logger.log("Seeding is inactive");
 }
+
+console.log(app.request);
 //console.log(app.request);
 // setup the app middlware
 require('./middleware/appMiddleware')(app,passport);

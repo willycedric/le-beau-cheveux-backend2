@@ -53,11 +53,12 @@ exports.put = function(req, res, next) {
 };
 
 exports.post = function(req, res, next) {
+  console.log(req.body);
   var newpost = req.body;
-  newpost.author = req.user._id;
+  //newpost.author = req.user._id;
   Post.create(newpost)
     .then(function(post) {
-      res.json(post);
+      res.status(202);
     }, function(err) {
       logger.error(err);
       next(err);
